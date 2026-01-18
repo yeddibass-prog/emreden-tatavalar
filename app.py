@@ -5,107 +5,84 @@ import os, time, io
 from datetime import datetime
 from gtts import gTTS
 
-# --- 🛰️ MASTER CONFIG ---
+# --- 🛰️ MASTER KEY (BURAYI UNUTMA) ---
+# Kendi API anahtarını buraya hatasız yapıştır.
 DEFAULT_API_KEY = "AIzaSyBPmRSFFfVL6CrSGpJNSdwM5LkPVZ4ULkQ"
 
-st.set_page_config(page_title="Emre Aras AI", layout="wide", page_icon="💎")
+st.set_page_config(page_title="Emre Aras AI", layout="wide", page_icon="🧠")
 
-# --- 🌑 PREMIUM DESIGN SYSTEM (CSS) ---
+# --- 🌑 DARK NEBULA UI DESIGN (PREMIUM CSS) ---
 st.markdown("""
     <style>
-    /* Gemini & Modern SaaS Estetiği */
+    /* Gemini Stil Arka Plan ve Yazı Tipi */
     .stApp {
-        background: radial-gradient(circle at top right, #111827, #000000, #020617);
-        color: #f8fafc;
-        font-family: 'Inter', -apple-system, sans-serif;
+        background-color: #0b0d11;
+        color: #e3e3e3;
+        font-family: 'Google Sans', 'Inter', sans-serif;
     }
 
-    /* Modern Logo & Header */
-    .brand-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 50px 0;
-        background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        margin-bottom: 40px;
+    /* Üst Header Konteynırı */
+    .st-emotion-cache-1833z0 { /* Sidebar'ı daha zarif yapar */
+        background-color: #111418 !important;
     }
 
-    .brand-logo {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        font-weight: 800;
-        color: white;
-        box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-        margin-bottom: 15px;
+    /* Ana Başlık Alanı */
+    .main-hero {
+        text-align: center;
+        padding: 40px 0;
+        background: linear-gradient(180deg, rgba(66, 133, 244, 0.1) 0%, rgba(11, 13, 17, 0) 100%);
+        border-radius: 0 0 40px 40px;
+        margin-bottom: 30px;
     }
-
-    .brand-title {
-        font-size: 42px;
-        font-weight: 800;
+    
+    .main-logo {
+        font-size: 48px;
+        font-weight: 700;
+        color: #ffffff;
         letter-spacing: -1.5px;
-        background: linear-gradient(to bottom, #ffffff, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        margin: 0;
     }
 
-    /* Glassmorphism Kartlar */
-    div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
-        background: rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Cam Kartlar */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 24px;
-        padding: 30px;
-        transition: 0.3s;
+        padding: 25px;
+        margin-bottom: 20px;
     }
 
-    /* Modern Inputlar */
-    .stTextArea textarea, .stTextInput input {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    /* Giriş Kutuları */
+    .stTextArea textarea {
+        background-color: #1e2126 !important;
+        border: 1px solid #3c4043 !important;
         border-radius: 16px !important;
-        color: #fff !important;
+        color: #e3e3e3 !important;
         padding: 15px !important;
     }
 
-    /* Apple Tarzı Butonlar */
+    /* Aksiyon Butonları (Mavi Gradient) */
     .stButton>button {
-        background: #ffffff;
-        color: #000000;
+        background: linear-gradient(90deg, #4285f4, #9b72f3);
+        color: white;
         border: none;
-        border-radius: 100px;
-        padding: 12px 40px;
-        font-weight: 700;
-        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        width: auto;
-        display: block;
-        margin: 10px auto;
+        border-radius: 12px;
+        padding: 12px 30px;
+        font-weight: 600;
+        width: 100%;
+        transition: 0.3s ease;
     }
     
     .stButton>button:hover {
-        transform: scale(1.05);
-        background: #f1f5f9;
-        box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
-    }
-
-    /* Sidebar Gizleme ve Modernize Etme */
-    section[data-testid="stSidebar"] {
-        background-color: rgba(0, 0, 0, 0.8) !important;
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255,255,255,0.05);
+        opacity: 0.9;
+        transform: scale(1.02);
+        box-shadow: 0 4px 20px rgba(66, 133, 244, 0.3);
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 💾 VERİTABANI VE LOGLAMA ---
+# --- 💾 VERİ YÖNETİMİ ---
 USER_DB, LOG_DB = "users.csv", "logs.csv"
-
 def init_db():
     if not os.path.exists(USER_DB):
         pd.DataFrame({"username": ["emrearas"], "password": ["master123"], "role": ["admin"]}).to_csv(USER_DB, index=False)
@@ -114,93 +91,70 @@ def init_db():
 
 init_db()
 
-def log_action(user, action, content):
-    df = pd.read_csv(LOG_DB)
-    new_log = pd.DataFrame({
-        "timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        "user": [user],
-        "action": [action],
-        "content": [content[:150]]
-    })
-    pd.concat([df, new_log]).to_csv(LOG_DB, index=False)
-
-# --- 🔐 LOGIN ---
+# --- 🔐 GİRİŞ SİSTEMİ ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
-    st.markdown('<div class="brand-container"><div class="brand-logo">EA</div><div class="brand-title">EMRE ARAS AI</div></div>', unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1])
+    st.markdown('<div class="main-hero"><h1 class="main-logo">EMRE ARAS AI</h1></div>', unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
         u = st.text_input("Kullanıcı Adı")
         p = st.text_input("Şifre", type="password")
-        if st.button("SİSTEMİ UYANDIR"):
+        if st.button("SİSTEME GİRİŞ"):
             users = pd.read_csv(USER_DB)
             if u in users['username'].values and str(p) == str(users[users['username']==u]['password'].values[0]):
                 st.session_state.logged_in, st.session_state.user, st.session_state.role = True, u, users[users['username']==u]['role'].values[0]
                 st.rerun()
-            else: st.error("Erişim Reddedildi.")
+            else: st.error("Hatalı bilgiler.")
     st.stop()
 
-# --- 🔱 NEXUS OPERATIONAL INTERFACE ---
-genai.configure(api_key=DEFAULT_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-pro')
+# --- 🔱 YAPAY ZEKA BAĞLANTISI ---
+try:
+    genai.configure(api_key=DEFAULT_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-pro')
+except Exception as e:
+    st.error(f"API Bağlantı Hatası: {e}")
 
-st.markdown('<div class="brand-container"><div class="brand-logo">EA</div><div class="brand-title">EMRE ARAS AI</div></div>', unsafe_allow_html=True)
+# --- 🖥️ ANA ARAYÜZ ---
+st.markdown('<div class="main-hero"><h1 class="main-logo">Emre Aras AI</h1></div>', unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown(f"### 💠 {st.session_state.user.upper()}")
-    st.caption(f"YETKİ: {st.session_state.role.upper()}")
-    if st.button("GÜVENLİ ÇIKIŞ"):
+    st.markdown(f"### 👤 {st.session_state.user.upper()}")
+    st.caption(f"YETKİ: {st.session_state.role}")
+    if st.button("Çıkış Yap"):
         st.session_state.logged_in = False
         st.rerun()
     
     if st.session_state.role == "admin":
         st.markdown("---")
-        st.markdown("### ⚙️ YÖNETİM PANELİ")
-        with st.expander("Kullanıcı Ekle"):
-            nu = st.text_input("Yeni Kullanıcı")
-            np = st.text_input("Yeni Şifre", type="password")
-            nr = st.selectbox("Yetki", ["user", "admin"])
-            if st.button("KAYDET"):
-                udf = pd.read_csv(USER_DB)
-                pd.concat([udf, pd.DataFrame({"username": [nu], "password": [np], "role": [nr]})]).to_csv(USER_DB, index=False)
-                st.success("Kullanıcı eklendi.")
-        
-        if st.checkbox("İşlem Kayıtlarını İzle"):
-            st.dataframe(pd.read_csv(LOG_DB).tail(50), use_container_width=True)
+        if st.checkbox("İşlem Kayıtlarını Göster"):
+            st.dataframe(pd.read_csv(LOG_DB).tail(20), use_container_width=True)
 
 # --- 🌌 MODÜLLER ---
-t1, t2, t3 = st.tabs(["🤖 STRATEJİK ANALİZ", "🎨 GENESIS ÜRETİM", "💻 TEKNİK LABORATUVAR"])
+tab1, tab2 = st.tabs(["💬 Akıllı Sohbet", "🎨 Görsel Üretim"])
 
-with t1:
-    prompt = st.text_area("Yapay Zekaya bir talimat verin...", height=150)
-    if st.button("ANALİZİ BAŞLAT"):
-        with st.spinner("Nexus ağına bağlanılıyor..."):
-            response = model.generate_content(prompt)
-            st.markdown("### 🤖 Yanıt")
-            st.write(response.text)
-            log_action(st.session_state.user, "AI Sorgusu", prompt)
+with tab1:
+    prompt = st.text_area("Size nasıl yardımcı olabilirim?", height=200, placeholder="Emrinizi buraya yazın...")
+    if st.button("ANALİZ ET"):
+        if prompt:
+            with st.spinner("YZ Düşünüyor..."):
+                try:
+                    response = model.generate_content(prompt)
+                    st.markdown("### 🤖 Yanıt")
+                    st.write(response.text)
+                    
+                    # Loglama
+                    logs = pd.read_csv(LOG_DB)
+                    new_log = pd.DataFrame({"timestamp": [datetime.now().strftime("%H:%M:%S")], "user": [st.session_state.user], "action": ["Sohbet"], "content": [prompt[:50]]})
+                    pd.concat([logs, new_log]).to_csv(LOG_DB, index=False)
+                except Exception as e:
+                    st.error(f"YZ Hatası: {e}. API anahtarınızı kontrol edin.")
 
-with t2:
-    img_q = st.text_input("Görsel Konsepti:")
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("GÖRSELİ VAR ET"):
+with tab2:
+    img_q = st.text_input("Görsel Konsepti (Örn: Erzurum manzarası):")
+    if st.button("GÖRSELİ OLUŞTUR"):
+        with st.spinner("Görsel çiziliyor..."):
             url = f"https://pollinations.ai/p/{img_q.replace(' ', '_')}?width=1024&height=1024&model=flux"
-            st.image(url, caption="EA AI Visual Asset")
-            log_action(st.session_state.user, "Görsel Üretimi", img_q)
-    with c2:
-        if st.button("SESİ SENTEZLE"):
-            tts = gTTS(text=img_q, lang='tr')
-            fp = io.BytesIO(); tts.write_to_fp(fp); fp.seek(0)
-            st.audio(fp)
-            log_action(st.session_state.user, "Ses Sentezi", img_q)
+            st.image(url, caption="Emre Aras AI Tarafından Üretildi")
 
-with t3:
-    tech_q = st.text_area("Teknik veri veya kod girişi:")
-    if st.button("LABORATUVARI ÇALIŞTIR"):
-        response = model.generate_content(f"Kıdemli mühendis olarak analiz et: {tech_q}")
-        st.code(response.text)
-        log_action(st.session_state.user, "Teknik Analiz", tech_q)
-
-st.markdown("<br><p style='text-align: center; color: rgba(255,255,255,0.2); font-size: 11px;'>EMRE ARAS AI | NEXUS CORE | PRIVILEGED ACCESS ONLY</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><center>© 2026 Emre Aras AI | Stratejik Yapay Zeka Çözümleri</center>", unsafe_allow_html=True)
