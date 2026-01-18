@@ -5,133 +5,165 @@ import os, time, io
 from datetime import datetime
 from gtts import gTTS
 
-# --- 🛰️ MASTER CONFIG (ALL-IN-ONE) ---
+# --- 🛰️ SİSTEM AYARLARI ---
 # API Anahtarını buraya yapıştır
 API_KEY = "AIzaSyBPmRSFFfVL6CrSGpJNSdwM5LkPVZ4ULkQ"
 
-st.set_page_config(page_title="Emre Aras AI", layout="wide", page_icon="🔱")
+st.set_page_config(
+    page_title="Emre Aras AI | Nexus Pro",
+    layout="wide",
+    page_icon="🔱"
+)
 
-# --- 🌌 NEXUS SUPREME UI (PROFESSIONAL BLACK) ---
+# --- 🌌 GÖRSELDEKİ MODERN ARAYÜZ (CSS) ---
 st.markdown("""
     <style>
-    /* Gemini & OpenAI Dark Mode Karışımı */
-    .stApp { background-color: #030712; color: #f9fafb; font-family: 'Inter', sans-serif; }
-    
-    /* Header & Branding */
-    .header-bar {
+    /* Ana Tema: Derin Uzay Siyahı */
+    .stApp {
+        background-color: #05070a;
+        color: #e2e8f0;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    /* Üst Panel (Header) */
+    .main-header {
         text-align: center;
-        padding: 40px;
-        background: linear-gradient(180deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%);
-        border-bottom: 1px solid #1f2937;
+        padding: 50px 0;
+        background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, rgba(5, 7, 10, 0) 100%);
+        border-bottom: 1px solid #1e293b;
         margin-bottom: 30px;
     }
-    .header-title { font-size: 46px; font-weight: 800; color: #ffffff; letter-spacing: -2px; }
-
-    /* Enter Tuşu Desteği & Chat Box */
-    .stChatInputContainer { padding: 20px !important; }
     
-    /* Modern Sekmeler */
-    .stTabs [data-baseweb="tab-list"] { gap: 20px; border: none; }
-    .stTabs [data-baseweb="tab"] { font-weight: 700; color: #9ca3af !important; font-size: 15px; }
-    .stTabs [aria-selected="true"] { color: #3b82f6 !important; border-bottom: 2px solid #3b82f6 !important; }
-
-    /* Butonlar & Kartlar */
-    .stButton>button {
-        background: #ffffff !important; color: #000 !important;
-        border-radius: 100px !important; font-weight: 700 !important;
-        padding: 10px 40px !important;
+    .main-title {
+        font-size: 50px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-    [data-testid="stSidebar"] { background-color: #000 !important; border-right: 1px solid #1f2937; }
+
+    /* Kartlar ve Giriş Alanları */
+    .stChatInputContainer { padding: 20px !important; }
+    .stTextArea textarea, .stTextInput input {
+        background-color: #0f172a !important;
+        border: 1px solid #1e293b !important;
+        border-radius: 12px !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* Apple Tarzı Butonlar */
+    .stButton>button {
+        background: #ffffff !important;
+        color: #020617 !important;
+        border-radius: 50px !important;
+        padding: 12px 40px !important;
+        font-weight: 700 !important;
+        transition: 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    /* Sidebar Tasarımı */
+    [data-testid="stSidebar"] {
+        background-color: #020617 !important;
+        border-right: 1px solid #1e293b;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 💾 SİSTEM HAFIZASI ---
+# --- 🔱 OTOMATİK MODEL SEÇİCİ (HATA SAVAR) ---
+@st.cache_resource
+def load_nexus_engine():
+    try:
+        genai.configure(api_key=API_KEY)
+        models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # Hata vermemesi için çalışan en iyi modelleri sırayla dener
+        for target in ['models/gemini-1.5-pro-latest', 'models/gemini-1.5-flash-latest', 'models/gemini-pro']:
+            if target in models:
+                return genai.GenerativeModel(target)
+        return genai.GenerativeModel(models[0]) if models else None
+    except:
+        return None
+
+# --- 💾 OTURUM YÖNETİMİ ---
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
-# --- 🔱 ALL MODELS INITIALIZATION (NO-ERROR VERSION) ---
-try:
-    genai.configure(api_key=API_KEY)
-    # 404 HATASINI ÇÖZEN EN KARARLI PRO MODEL
-    pro_model = genai.GenerativeModel('gemini-1.5-pro-latest') 
-    flash_model = genai.GenerativeModel('gemini-1.5-flash-latest')
-except:
-    st.error("API Bağlantı Hatası: Lütfen anahtarınızı kontrol edin.")
-
-# --- 🔓 LOGIN ---
+# --- 🔐 GİRİŞ EKRANI ---
 if not st.session_state.logged_in:
-    st.markdown('<div class="header-bar"><h1 class="header-title">EMRE ARAS AI</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header"><h1 class="main-title">EMRE ARAS AI</h1></div>', unsafe_allow_html=True)
     _, login_col, _ = st.columns([1, 1, 1])
     with login_col:
-        u = st.text_input("Yönetici Kimliği", placeholder="emrearas")
-        p = st.text_input("Giriş Anahtarı", type="password", placeholder="master123")
+        u = st.text_input("Sistem Kimliği")
+        p = st.text_input("Erişim Kodu", type="password")
         if st.button("SİSTEMİ BAŞLAT"):
             if u == "emrearas" and p == "master123":
                 st.session_state.logged_in = True
                 st.rerun()
-            else: st.error("Erişim Reddedildi.")
+            else: st.error("Yetkisiz Erişim.")
     st.stop()
 
-# --- 🖥️ COMMAND CENTER ---
-st.markdown('<div class="header-bar"><h1 class="header-title">Emre Aras AI Karargahı</h1></div>', unsafe_allow_html=True)
+# --- 🖥️ ANA KOMUTA MERKEZİ ---
+st.markdown('<div class="main-header"><h1 class="main-title">Nexus Pro Karargahı</h1></div>', unsafe_allow_html=True)
+engine = load_nexus_engine()
 
 with st.sidebar:
-    st.markdown(f"### 👤 ADMIN: EMRE ARAS")
+    st.markdown(f"### 💠 ADMIN: EMRE ARAS")
+    st.caption("Status: All Systems Functional")
     if st.button("Güvenli Çıkış"):
         st.session_state.logged_in = False
         st.rerun()
     st.markdown("---")
-    st.info("✓ 4 Ana YZ Motoru Aktif\n\n✓ Enter Tuşu Desteği Aktif\n\n✓ 404-Hata Koruması Aktif")
+    st.write("✓ Bütün YZ'ler Yüklü")
+    st.write("✓ Enter Desteği Aktif")
 
-# --- 🚀 BÜTÜN YZ MODÜLLERİ (TOTAL INTEGRATION) ---
-tab1, tab2, tab3, tab4 = st.tabs(["💬 NEXUS CHAT (ENTER)", "🎨 GENESIS GÖRSEL", "💻 SİBER & KOD LAB", "🔊 SES SENTEZ"])
+# --- 🚀 TÜM YAPAY ZEKALAR (TABS) ---
+tab1, tab2, tab3, tab4 = st.tabs(["💬 STRATEJİ & CHAT", "🎨 GENESİS GÖRSEL", "💻 KOD/SİBER LAB", "🔊 SES SENTEZ"])
 
 with tab1:
-    # Sohbet Geçmişini Görüntüle
+    # Sohbet geçmişini göster
     for chat in st.session_state.chat_history:
         with st.chat_message(chat["role"]): st.markdown(chat["content"])
     
-    # ENTER İLE ÇALIŞAN ANA SOHBET
-    if prompt := st.chat_input("Yapay Zekaya bir emir verin..."):
+    # Enter tuşu ile çalışan ana giriş
+    if prompt := st.chat_input("Emrinizi buraya yazın..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            with st.spinner("Pro Zeka Analiz Ediyor..."):
+            if engine:
                 try:
-                    # En güçlü modeli kullanıyoruz
-                    response = pro_model.generate_content(prompt)
+                    response = engine.generate_content(prompt)
                     st.markdown(response.text)
                     st.session_state.chat_history.append({"role": "assistant", "content": response.text})
-                except:
-                    # Hata durumunda Flash modele yedekleme yapıyoruz
-                    response = flash_model.generate_content(prompt)
-                    st.markdown(response.text)
-                    st.session_state.chat_history.append({"role": "assistant", "content": response.text})
+                except Exception as e: st.error(f"Bağlantı Hatası: {e}")
 
 with tab2:
-    img_prompt = st.text_input("Hayal ettiğiniz görseli tanımlayın:")
+    img_q = st.text_input("Yaratılacak görsel konsepti:")
     if st.button("GÖRSELİ VAR ET"):
         with st.spinner("Piksel sentezleniyor..."):
-            # Flux ve SD Altyapısını kullanan görsel motoru
-            url = f"https://pollinations.ai/p/{img_prompt.replace(' ', '_')}?width=1280&height=720&model=flux&seed={int(time.time())}"
-            st.image(url, caption="Nexus Visual Hub")
+            url = f"https://pollinations.ai/p/{img_q.replace(' ', '_')}?width=1024&height=1024&model=flux&seed={int(time.time())}"
+            st.image(url, caption="Nexus Visual Output")
 
 with tab3:
-    st.subheader("💻 Teknik ve Siber Analiz Laboratuvarı")
-    code_input = st.text_area("Analiz edilecek teknik veri:", height=200)
-    if st.button("KODU VE SİBERİ ANALİZ ET"):
-        with st.spinner("Teknik tarama yapılıyor..."):
-            res = pro_model.generate_content(f"Kıdemli yazılım mimarı ve siber güvenlik uzmanı olarak analiz et: {code_input}")
+    st.subheader("💻 Teknik Analiz ve Siber Güvenlik")
+    code_input = st.text_area("Analiz edilecek veri:", height=200)
+    if st.button("ANALİZİ BAŞLAT"):
+        if engine:
+            res = engine.generate_content(f"Kıdemli mühendis olarak teknik analiz yap: {code_input}")
             st.code(res.text)
 
 with tab4:
     st.subheader("🔊 Ses Sentezleme")
-    voice_text = st.text_area("Sese çevrilecek metni girin:")
-    if st.button("SESİ OLUŞTUR"):
-        tts = gTTS(text=voice_text, lang='tr')
-        byte_io = io.BytesIO()
-        tts.write_to_fp(byte_io)
-        st.audio(byte_io)
+    text_to_voice = st.text_area("Sese çevrilecek metin:")
+    if st.button("SES ÜRET"):
+        tts = gTTS(text=text_to_voice, lang='tr')
+        b = io.BytesIO()
+        tts.write_to_fp(b)
+        st.audio(b)
 
-st.markdown("<br><center style='color: #4b5563; font-size: 11px;'>EMRE ARAS AI | OMNI-ZENITH PRO | ALL SYSTEMS ONLINE</center>", unsafe_allow_html=True)
+st.markdown("<br><center>© 2026 Emre Aras AI | Omni-Nexus Pro | Kusursuz Sürüm</center>", unsafe_allow_html=True)
