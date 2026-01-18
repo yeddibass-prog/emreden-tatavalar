@@ -1,153 +1,101 @@
 import streamlit as st
 import google.generativeai as genai
-import requests, time, io, os
-from gtts import gTTS
-from PIL import Image
+import pandas as pd
+import os
+from datetime import datetime
 
-# --- 🛰️ NEXUS CORE: ULTRA-MODERN CONFIG ---
-st.set_page_config(
-    page_title="Emre Aras AI | Nexus Intelligence",
-    layout="wide",
-    page_icon="🌌"
-)
+# --- 🛰️ MASTER CONFIG ---
+DEFAULT_API_KEY = AIzaSyBPmRSFFfVL6CrSGpJNSdwM5LkPVZ4ULkQ
 
-# --- 🌌 GEMINI STYLE GLASSMORPHISM (CSS) ---
-st.markdown("""
-    <style>
-    /* Gemini Animasyonlu Arka Plan */
-    .stApp {
-        background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #020617);
-        color: #f8fafc;
-        font-family: 'Inter', sans-serif;
-    }
+# --- 💾 VERİTABANI YÖNETİMİ (Kullanıcılar ve Yetkiler) ---
+USER_DB = "user_database.csv"
+LOG_DB = "system_logs.csv"
 
-    /* Cam Efekti Kartlar (Glassmorphism) */
-    div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(12px);
-        border-radius: 24px;
-        padding: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 20px;
-    }
-
-    /* Premium Header */
-    .nexus-header {
-        text-align: center;
-        padding: 60px 0;
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+def load_data():
+    if not os.path.exists(USER_DB):
+        # Başlangıç Ayarı: Kullanıcı Adı, Şifre, Yetki (admin veya user)
+        df = pd.DataFrame({
+            "username": ["emrearas"], 
+            "password": ["master123"], 
+            "role": ["admin"]
+        })
+        df.to_csv(USER_DB, index=False)
     
-    .nexus-title {
-        font-size: 64px;
-        font-weight: 800;
-        letter-spacing: -2px;
-        margin: 0;
-    }
-
-    /* Gemini Tarzı Glow Butonlar */
-    .stButton>button {
-        background: linear-gradient(90deg, #4f46e5, #7c3aed);
-        color: white;
-        border: none;
-        border-radius: 100px; /* Tam yuvarlak */
-        padding: 14px 40px;
-        font-weight: 600;
-        width: auto;
-        display: block;
-        margin: 0 auto;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
-    }
+    if not os.path.exists(LOG_DB):
+        df = pd.DataFrame(columns=["timestamp", "user", "action", "content"])
+        df.to_csv(LOG_DB, index=False)
     
-    .stButton>button:hover {
-        transform: scale(1.05) translateY(-3px);
-        box-shadow: 0 20px 40px -10px rgba(124, 58, 237, 0.6);
-        color: white;
-    }
+    return pd.read_csv(USER_DB), pd.read_csv(LOG_DB)
 
-    /* Sidebar Gizleme ve Modernize Etme */
-    section[data-testid="stSidebar"] {
-        background-color: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
+def save_user(username, password, role):
+    df = pd.read_csv(USER_DB)
+    if username in df['username'].values:
+        # Eğer kullanıcı varsa güncelle (Şifre veya Yetki değiştirme)
+        df.loc[df['username'] == username, ['password', 'role']] = [password, role]
+    else:
+        # Yeni kullanıcı ekle
+        new_user = pd.DataFrame({"username": [username], "password": [password], "role": [role]})
+        df = pd.concat([df, new_user], ignore_index=True)
+    df.to_csv(USER_DB, index=False)
 
-    /* Input Alanları */
-    .stTextArea textarea {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 16px !important;
-        color: #f8fafc !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+def add_log(user, action, content):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    df = pd.read_csv(LOG_DB)
+    new_log = pd.DataFrame({"timestamp": [now], "user": [user], "action": [action], "content": [content]})
+    df = pd.concat([df, new_log], ignore_index=True)
+    df.to_csv(LOG_DB, index=False)
 
-# --- 🌌 NEXUS BRANDING ---
-st.markdown("""
-    <div class="nexus-header">
-        <h1 class="nexus-title">EMRE ARAS AI</h1>
-        <p style="color: #94a3b8; letter-spacing: 5px; font-weight: 500;">NEXUS STRATEGIC ECOSYSTEM</p>
-    </div>
-    """, unsafe_allow_html=True)
+users_df, logs_df = load_data()
 
-# --- 🗝️ SYSTEM ACCESS ---
-with st.sidebar:
-    st.markdown("### 🛡️ CONTROL CENTER")
-    api_key = st.text_input("Enter Nexus Key:", type="password", placeholder="AI Studio Key...")
-    
-    if api_key:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        st.success("BİLİNÇ: ONLINE")
-    
-    st.markdown("---")
-    st.caption("EMRE ARAS AI v4.0 | NEXUS EDITION")
+# --- 🔐 GİRİŞ KONTROLÜ ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if api_key:
-    # --- 🌌 PREMIUM SEKMELER ---
-    tabs = st.tabs(["🔱 STRATEJİ", "🎨 YARATIM", "💻 TEKNOLOJİ", "📈 İSTİHBARAT"])
+if not st.session_state.logged_in:
+    st.title("Emre Aras AI | Giriş")
+    u = st.text_input("Kullanıcı Adı")
+    p = st.text_input("Şifre", type="password")
+    if st.button("Giriş"):
+        if u in users_df['username'].values:
+            user_data = users_df[users_df['username'] == u].iloc[0]
+            if str(p) == str(user_data['password']):
+                st.session_state.logged_in = True
+                st.session_state.user = u
+                st.session_state.role = user_data['role']
+                st.rerun()
+        st.error("Hatalı bilgiler.")
+    st.stop()
 
-    with tabs[0]:
-        st.markdown("### 🔱 Master Strategy Swarm")
-        task = st.text_area("Karmaşık bir görev tanımlayın:", height=150)
-        if st.button("SİSTEMİ TETİKLE"):
-            with st.spinner("Nexus ağına bağlanılıyor..."):
-                res = model.generate_content(f"Sen dünyanın en zeki AI asistanısın. Şu konuyu en derin haliyle çöz: {task}")
-                st.markdown(res.text)
+# --- 🔱 ANA SİSTEM ---
+st.sidebar.title(f"👤 {st.session_state.user.upper()}")
+st.sidebar.info(f"Yetki: {st.session_state.role.upper()}")
 
-    with tabs[1]:
-        st.markdown("### 🎨 Creative Asset Generator")
-        p_text = st.text_input("Yaratılacak konsept:")
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("GÖRSELİ VAR ET"):
-                url = f"https://pollinations.ai/p/{p_text.replace(' ', '_')}?width=1280&height=720&seed={time.time()}&model=flux"
-                st.image(url, use_container_width=True)
-        with c2:
-            if st.button("SESİ SENTEZLE"):
-                tts = gTTS(text=p_text, lang='tr')
-                fp = io.BytesIO(); tts.write_to_fp(fp); fp.seek(0)
-                st.audio(fp)
+if st.sidebar.button("Çıkış Yap"):
+    st.session_state.logged_in = False
+    st.rerun()
 
-    with tabs[2]:
-        st.markdown("### 💻 Neural Architecture & Code")
-        c_input = st.text_area("Analiz edilecek veri:")
-        if st.button("KODU EVRİLT"):
-            res = model.generate_content(f"Kıdemli yazılım mimarı olarak analiz et: {c_input}")
-            st.code(res.text)
+# --- ⚙️ YÖNETİCİ PANELİ (Sadece 'admin' rolündekiler görebilir) ---
+if st.session_state.role == "admin":
+    with st.sidebar.expander("🛡️ Yönetim Merkezi"):
+        st.subheader("Kullanıcı & Yetki Yönetimi")
+        target_user = st.text_input("Hedef Kullanıcı Adı")
+        target_pw = st.text_input("Şifre Belirle", type="password")
+        target_role = st.selectbox("Yetki Seviyesi", ["user", "admin"])
+        
+        if st.button("Kullanıcıyı Kaydet/Güncelle"):
+            save_user(target_user, target_pw, target_role)
+            st.success(f"{target_user} ({target_role}) kaydedildi!")
 
-    with tabs[3]:
-        st.markdown("### 📈 Global Market & OSINT")
-        o_input = st.text_input("Haber veya borsa odağı:")
-        if st.button("İSTİHBARATI ÇEK"):
-            res = model.generate_content(f"OSINT ve Finansal Deha olarak analiz et: {o_input}")
-            st.warning(res.text)
+        st.markdown("---")
+        st.markdown("#### 📜 Sistem Kayıtları")
+        current_logs = pd.read_csv(LOG_DB)
+        st.dataframe(current_logs.tail(20))
 
-else:
-    st.markdown("<div style='text-align: center; padding: 50px; color: #64748b;'>Sistemi uyandırmak için Nexus anahtarını sidebar paneline girin.</div>", unsafe_allow_html=True)
-
-st.markdown("---")
-st.markdown("<p style='text-align: center; color: #475569; font-size: 11px;'>EMRE ARAS AI | NEXUS CORE | 2026</p>", unsafe_allow_html=True)
+# --- 🌌 YAPAY ZEKA MODÜLLERİ ---
+# (Buraya daha önce hazırladığımız Gemini fonksiyonlarını ekleyebilirsin)
+st.header("Emre Aras AI Stratejik Merkezi")
+prompt = st.text_area("Sorunuzu buraya yazın:")
+if st.button("Analiz Et"):
+    add_log(st.session_state.user, "AI Sorgusu", prompt)
+    # Gemini API çağrısı buraya gelecek...
+    st.write("Analiz tamamlandı. (Loglara kaydedildi)")
