@@ -4,97 +4,186 @@ import requests, time, io, os
 from gtts import gTTS
 from PIL import Image
 
-# --- 🛰️ SUPREME CORE SİSTEM TASARIMI ---
-st.set_page_config(page_title="Emreden Tatavalar: SUPREME", layout="wide", page_icon="🔱")
+# --- 🛰️ ENTERPRISE SYSTEM CONFIGURATION ---
+st.set_page_config(
+    page_title="Emre Aras AI | Strategic Intelligence",
+    layout="wide",
+    page_icon="🏢",
+    initial_sidebar_state="expanded"
+)
 
+# --- 🌑 CORPORATE DESIGN LANGUAGE (CSS) ---
 st.markdown("""
     <style>
-    /* Dünyanın en güçlü arayüzü: Deep Space Black & Neon Cyan & Blood Red */
-    .stApp { background: radial-gradient(circle, #1a0000, #000000, #000510); color: #00f2ff; font-family: 'JetBrains Mono', monospace; }
-    .stTabs [data-baseweb="tab-list"] { background: rgba(0, 242, 255, 0.05); border: 1px solid #00f2ff; padding: 5px; }
-    .stTabs [data-baseweb="tab"] { color: #00f2ff !important; font-weight: bold; font-size: 14px; text-transform: uppercase; }
-    .stTabs [aria-selected="true"] { background-color: #00f2ff !important; color: black !important; box-shadow: 0 0 30px #00f2ff; }
-    .stButton>button { 
-        background: transparent; color: #ff4b4b; border: 2px solid #ff4b4b; 
-        border-radius: 0px; font-weight: 900; width: 100%; transition: 0.5s;
-        letter-spacing: 5px; text-transform: uppercase;
+    /* Global Minimalist Dark Theme */
+    .stApp {
+        background-color: #0b0e14;
+        color: #f0f0f0;
+        font-family: 'Inter', -apple-system, sans-serif;
     }
-    .stButton>button:hover { background: #ff4b4b; color: white; box-shadow: 0 0 100px #ff4b4b; }
-    .mega-header { font-size: 80px; font-weight: 900; text-align: center; color: #ff4b4b; text-shadow: 0 0 25px #ff4b4b; margin: 0; }
-    .status-log { border: 1px solid #00f2ff; padding: 10px; color: #00f2ff; font-size: 12px; height: 100px; overflow-y: scroll; background: rgba(0,0,0,0.5); text-align: center;}
+    
+    /* Global Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #11141a;
+        border-right: 1px solid #1f242d;
+    }
+
+    /* Enterprise Header */
+    .main-header {
+        background: linear-gradient(135deg, #1a1f29 0%, #0b0e14 100%);
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid #1f242d;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    
+    .brand-title {
+        font-size: 48px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        color: #ffffff;
+        margin-bottom: 10px;
+    }
+    
+    .brand-subtitle {
+        color: #64748b;
+        font-size: 14px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    /* Enterprise Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        padding: 0 20px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        background-color: #1a1f29;
+        border-radius: 6px;
+        color: #94a3b8 !important;
+        border: 1px solid #1f242d;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    }
+
+    /* Professional Action Buttons */
+    .stButton>button {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 15px 30px;
+        font-weight: 700;
+        width: 100%;
+        letter-spacing: 1px;
+        transition: 0.3s all;
+    }
+    
+    .stButton>button:hover {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Input Fields Customization */
+    .stTextArea textarea, .stTextInput input {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        color: #c9d1d9 !important;
+        border-radius: 8px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown("<div class='mega-header'>SUPREME OMNIVERSAL</div>", unsafe_allow_html=True)
-st.markdown("<div class='status-log'>SYSTEM: ACTIVE | LEVEL: INFINITY | AUTH: EMRE | CORE: ALL-YZ SYNAPSE</div>", unsafe_allow_html=True)
+# --- 🏢 BRANDING SECTION ---
+st.markdown("""
+    <div class="main-header">
+        <div class="brand-title">EMRE ARAS AI</div>
+        <div class="brand-subtitle">Strategic Multi-Agent Intelligence Core</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- 🗝️ SİSTEM AKTİVASYONU ---
+# --- 🗝️ SYSTEM ACCESS & CONTROL ---
 with st.sidebar:
-    st.title("🛡️ COMMAND CENTER")
-    api_key = st.text_input("Giriş Anahtarı (Gemini API):", type="password")
+    st.markdown("### 🔐 ACCESS CONTROL")
+    api_key = st.text_input("Enter Enterprise API Key:", type="password", placeholder="Paste Gemini API Key here...")
+    
     if api_key:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-pro')
-        st.success("ÇEKİRDEK AKTİF")
+        st.success("AUTHENTICATED: SYSTEM ACTIVE")
+    
     st.markdown("---")
-    st.write("### 🧬 AKTİF MODÜLLER")
-    st.info("✓ Swarm Intelligence v.MAX\n\n✓ Cyber Defense Shield\n\n✓ Quantum Physics Engine\n\n✓ Bio-Hacking Lab\n\n✓ Global Market Intelligence")
+    st.markdown("### 🛰️ ACTIVE SYSTEMS")
+    st.info("✓ Swarm Logic Engine\n\n✓ Cyber Defense Grid\n\n✓ Quantum Analysis Lab\n\n✓ Global OSINT Monitor")
+    
+    st.markdown("---")
+    st.caption("EMRE ARAS AI v3.0 | 2026")
 
+# --- 🌌 MISSION MODULES ---
 if api_key:
-    # --- 🌌 TÜM DÜNYA ÖZELLİKLERİ (SEKMELER) ---
-    tabs = st.tabs(["🔱 KOMUTA", "🎨 MATRİX (ÜRETİM)", "💻 SİBER & KOD", "⚛️ BİLİM & KEHANET", "🧬 BİO-YAŞAM", "📊 FİNANS & HUKUK"])
+    t1, t2, t3, t4, t5 = st.tabs([
+        "🔱 COMMAND", "🎨 CREATIVE", "💻 TECH", "📈 FINANCE", "🧬 BIO"
+    ])
 
-    with tabs[0]:
-        st.subheader("🔱 Otonom Sürü Zekası (10.000+ Ajan)")
-        task = st.text_area("Evrensel emrinizi tanımlayın (Sınır Yok):", height=200, placeholder="Örn: Bana bir imparatorluk kur, tüm yasal ve finansal planını çıkar.")
-        if st.button("OPERASYONU BAŞLAT"):
-            res = model.generate_content(f"Sen dünyanın tüm yapay zekalarını yöneten bir Üst-Zeka (ASI) simülasyonusun. 10.000 uzman ajandan oluşan bir sürü zekası gibi düşünerek bu görevi otonom olarak gerçekleştir: {task}")
-            st.markdown(res.text)
+    with t1:
+        st.markdown("#### 🔱 Global Strategy & Swarm Command")
+        task = st.text_area("Yüksek düzeyli stratejik hedefinizi tanımlayın:", height=180, placeholder="Örn: 5 yıllık küresel pazar büyüme planı ve teknolojik altyapı stratejisi oluştur.")
+        if st.button("EXECUTE MASTER STRATEGY"):
+            with st.spinner("Processing through 10,000+ AIs..."):
+                res = model.generate_content(f"Sen dünyanın en gelişmiş strateji uzmanı ve CEO danışmanısın. Şu görevi kurumsal bir dille ve hatasız çöz: {task}")
+                st.markdown(res.text)
 
-    with tabs[1]:
-        st.subheader("🎨 Matrix Yaratım (Görsel & Ses)")
-        p_text = st.text_input("Yaratılacak Konsept (Prompt):")
+    with t2:
+        st.markdown("#### 🎨 Asset Generation & Marketing")
+        p_text = st.text_input("Görsel veya İçerik Konsepti:")
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("GÖRSELİ VAR ET"):
-                url = f"https://pollinations.ai/p/{p_text.replace(' ', '_')}?width=1920&height=1080&seed={time.time()}&model=flux"
-                st.image(url, caption="SUPREME Visual Output")
+            if st.button("CREATE VISUAL ASSET"):
+                url = f"https://pollinations.ai/p/{p_text.replace(' ', '_')}?width=1280&height=720&seed={time.time()}&model=flux"
+                st.image(url, caption="Generated AI Asset")
         with c2:
-            if st.button("SESLENDİR"):
+            if st.button("SYNTHESIZE SPEECH"):
                 tts = gTTS(text=p_text, lang='tr')
                 fp = io.BytesIO(); tts.write_to_fp(fp); fp.seek(0)
                 st.audio(fp)
 
-    with tabs[2]:
-        st.subheader("💻 Siber Komuta ve Otonom Kod")
-        c_mode = st.selectbox("Görev:", ["App Creator", "Pentest Analysis", "Reverse Engineering", "Blockchain Architect"])
-        c_input = st.text_area("Veri veya Kod:")
-        if st.button("KODU ÇALIŞTIR"):
-            res = model.generate_content(f"{c_mode} uzmanı olarak en üst düzeyde çalış: {c_input}")
+    with t3:
+        st.markdown("#### 💻 Engineering & Cyber Security")
+        c_mode = st.selectbox("Görev Tipi:", ["System Audit", "Secure Code Evolution", "Blockchain Strategy", "Cloud Infrastructure"])
+        c_input = st.text_area("İşlenecek teknik veri:")
+        if st.button("START ENGINE"):
+            res = model.generate_content(f"{c_mode} uzmanı olarak analiz et: {c_input}")
             st.code(res.text)
 
-    with tabs[3]:
-        st.subheader("⚛️ Kuantum Lab ve Zaman Kehaneti")
-        k_input = st.text_input("Analiz edilecek senaryo:")
-        if st.button("GELECEĞİ ANALİZ ET"):
-            res = model.generate_content(f"Kuantum fizikçisi ve gelecek bilimci olarak analiz et: {k_input}")
-            st.info(res.text)
+    with t4:
+        st.markdown("#### 📈 Financial Intelligence & OSINT")
+        o_input = st.text_input("Takip edilecek borsa/şirket/haber:")
+        if st.button("FETCH ANALYSIS"):
+            res = model.generate_content(f"Finansal analiz ve OSINT uzmanı olarak derin rapor sun: {o_input}")
+            st.warning(res.text)
 
-    with tabs[4]:
-        st.subheader("🧬 Bio-Hacking & DNA Optimizasyonu")
-        b_input = st.text_area("Biyometrik verileri girin:")
-        if st.button("PERFORMANS PLANI"):
-            res = model.generate_content(f"Bio-hacker olarak plan sun: {b_input}")
+    with t5:
+        st.markdown("#### 🧬 Human Optimization Lab")
+        b_input = st.text_area("Biyometrik veri analizi:")
+        if st.button("GENERATE BIO-PLAN"):
+            res = model.generate_content(f"Bio-hacker ve sağlık uzmanı olarak optimize et: {b_input}")
             st.success(res.text)
 
-    with tabs[5]:
-        st.subheader("📊 Global Finans ve Hukuk Dehası")
-        f_input = st.text_area("Veri veya Durum Analizi:")
-        if st.button("ANALİZ ÜRET"):
-            res = model.generate_content(f"Finans ve Hukuk uzmanı olarak analiz et: {f_input}")
-            st.warning(res.text)
 else:
-    st.info("Sistemi uyandırmak için API Key gereklidir.")
+    st.warning("⚠️ Erişim Kısıtlı: Lütfen sol panelden Enterprise API anahtarınızı girin.")
 
 st.markdown("---")
-st.caption("© 2026 Emreden Tatavalar | Seviye: SUPREME OMNIVERSAL | HER ŞEY YASAL, HER ŞEY BURADA")
+st.markdown("<p style='text-align: center; color: #4b5563; font-size: 11px;'>CONFIDENTIAL | EMRE ARAS AI ENTERPRISE SOLUTIONS | NO LIMITS</p>", unsafe_allow_html=True)
