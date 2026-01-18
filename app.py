@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # --- 🛰️ MASTER CONFIG ---
-DEFAULT_API_KEY = AIzaSyBPmRSFFfVL6CrSGpJNSdwM5LkPVZ4ULkQ
+DEFAULT_API_KEY = "AIzaSyBPmRSFFfVL6CrSGpJNSdwM5LkPVZ4ULkQ"
 
 # --- 💾 VERİTABANI YÖNETİMİ (Kullanıcılar ve Yetkiler) ---
 USER_DB = "user_database.csv"
